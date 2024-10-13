@@ -1,11 +1,13 @@
-"use client"; 
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from 'next/router';
 import { Providers } from "./Providers";
 import "./globals.css";
 import Footer from "../components/footer";
-import { usePathname } from 'next/navigation'
+import { usePathname } from "next/navigation";
 import Navbar from "@/components/navbar";
 import MainNavbar from "@/components/mainNavbar";
-
 
 export default function RootLayout({ children }) {
     const currentPath = usePathname()

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useRouter } from "next/navigation";
 import {
   Box,
   Flex,
@@ -17,7 +18,8 @@ import {
   useColorModeValue,
   Stack,
   Center,
-  Text
+  Text,
+  useToast
 } from '@chakra-ui/react';
 import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons';
 import Link from 'next/link';
@@ -54,6 +56,51 @@ const NavLink = ({ text, route }) => {
 
 export default function MainNavbar() {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const router = useRouter();
+  const toast = useToast();
+
+
+    // Logout function
+    const handleLogout = async () => {
+      console.log("Logging out");
+    
+      try {
+        const response = await fetch('http://localhost:8080/auth/logout', {
+          method: 'GET', 
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+    
+        if (!response.ok) {
+          throw new Error(`Logout failed: ${response.statusText}`);
+        }
+    
+        // set the response as text
+        const message = await response.text();
+
+        toast({
+          title: "Logout Successful",
+          description: message,
+          status: "success",
+          duration: 9000,
+          isClosable: true,
+        });
+    
+        router.push('/login'); 
+
+      } catch (error) {
+        console.error("Logout failed", error);
+        toast({
+          title: "Logout Failed",
+          description: error.message || "An error occurred during logout.",
+          status: "error",
+          duration: 9000,
+          isClosable: true,
+        });
+      }
+    };
+
 
   return (
     <>
@@ -110,9 +157,9 @@ export default function MainNavbar() {
                   </Center>
                   <br />
                   <MenuDivider />
-                  <MenuItem>
-                    Logout
-                  </MenuItem>
+                  <MenuItem color="black" onClick={handleLogout}>
+                  Logout
+                </MenuItem>
                 </MenuList>
               </Menu>
             </Stack>

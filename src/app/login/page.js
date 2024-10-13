@@ -75,7 +75,7 @@ export default function Login() {
             }
             // Redirect to player dashboard
             else if (data.role === "PLAYER") {
-                router.push("/find-tournament");
+                router.push("/choose-clan");
             }
         } catch (error) {
             console.error("Login failed", error);

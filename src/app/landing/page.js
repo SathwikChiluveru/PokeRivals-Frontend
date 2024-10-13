@@ -63,7 +63,7 @@ export default function Landing() {
       </Stack>
 
       {/* bottom section */}
-      <Stack minH={"75vh"} bg="#FFC700" bgSize="cover" bgPosition="center">
+      <Stack bg="#FFC700" bgSize="cover" bgPosition="center">
         <Heading as="h1" size="2xl" textAlign="center" py={"30px"} color="black">
           JOIN US!
         </Heading>

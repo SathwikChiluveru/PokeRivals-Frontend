@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import {
   Box,
   Button,
@@ -30,27 +31,27 @@ export default function AddAdmin() {
   useEffect(() => {
     const loadInvitedAdmins = async () => {
       try {
-        const response = await fetch('http://localhost:8080/admin/me/invitee', {
-          method: 'GET',
+        const response = await axios.get("http://localhost:8080/admin/me/invitee", {
+          withCredentials: true,
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch invited admins');
-        }
+        const admins = response.data;
 
-        const admins = await response.json();
-        setInvitedPeople(admins); // Set the invited people
+        // If no admins are invited yet, handle the empty response
+        if (admins.length !== 0) {
+          setInvitedPeople(admins); // Set the invited admins
+        }
       } catch (error) {
         console.error("Error fetching invited admins:", error);
-        setInvitedPeople([]); // Default to empty list on failure
+        setInvitedPeople([]); // Clear the list
       }
     };
 
     loadInvitedAdmins();
-  }, []); // Load invited admins on component mount
+  }, []);
 
   // Handle inviting a new admin
   const handleInvite = async (e) => {
@@ -58,39 +59,41 @@ export default function AddAdmin() {
     setIsInviting(true);
 
     try {
-      const response = await fetch('http://localhost:8080/admin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, email }), // Send both username and email
-      });
+      const response = await axios.post(
+        "http://localhost:8080/admin",
+        { 
+          username: username,
+           email: email 
+          },
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error('Failed to invite admin');
-      }
-
-      const result = await response.json();
       toast({
         title: "Invitation Sent",
-        description: result.message || "Invitation sent successfully",
+        description: "Invitation sent successfully to the user.",
         status: "success",
         duration: 3000,
         isClosable: true,
       });
 
-      // Add the new invite to the list
+      // Add the newly invited admin to the list
       setInvitedPeople([
         ...invitedPeople,
         { id: String(Date.now()), email, username, isactive: false },
       ]);
 
+      // Clear the form fields after inviting
       setEmail("");
       setUsername("");
     } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Failed to send invitation",
+        description: error.response?.data?.message || "Failed to send invitation",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -101,8 +104,8 @@ export default function AddAdmin() {
   };
 
   return (
-    <Flex minH="100vh" align="center" justify="center" bg="white">
-      <Container maxW="container.xl" py={8}>
+    <Flex minH="90vh"  bg="white">
+      <Container maxW="container.2xl" my={10} mx={{lg: 8, xl: "10%"}}>
         <Button onClick={() => router.back()} colorScheme="blue" mb={10}>
           Back
         </Button>
@@ -113,6 +116,7 @@ export default function AddAdmin() {
               Invite Admin
             </Heading>
 
+            {/* form to invite admin */}
             <form onSubmit={handleInvite}>
               <VStack my={5}>
                 <Input
@@ -125,10 +129,11 @@ export default function AddAdmin() {
                 />
                 <Input
                   type="email"
-                  placeholder="Enter email address"
+                  placeholder="Enter email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  mb={4}
                 />
               </VStack>
               <Button
@@ -143,6 +148,7 @@ export default function AddAdmin() {
             </form>
           </Box>
 
+          {/* List of Invited Admins */}
           <Box bg="white" shadow="md" borderRadius="lg" p={6}>
             <Heading size="lg" mb={4}>
               People I Invited
@@ -153,9 +159,12 @@ export default function AddAdmin() {
                 <ListItem key={person.id} mb={8}>
                   <Flex justify="space-between" align="center">
                     <Box>
-                      <Text fontWeight="bold">{person.email}</Text>
+                      <Text fontWeight="bold">{person.username}</Text>
+                      <Text>{person.description}</Text>
                       <Badge colorScheme={person.isactive ? "green" : "yellow"}>
-                        {person.isactive ? "Active" : "Waiting for confirmation"}
+                        {person.isactive
+                          ? "Active"
+                          : "Waiting for confirmation"}
                       </Badge>
                     </Box>
                     <Button
@@ -163,7 +172,9 @@ export default function AddAdmin() {
                       size="sm"
                       colorScheme="blue"
                       variant="outline"
-                      onClick={() => console.log(`Resend invitation to ${person.email}`)}
+                      onClick={() =>
+                        console.log(`Resend invitation to ${person.username}`)
+                      }
                     >
                       Resend link email
                     </Button>
@@ -172,6 +183,7 @@ export default function AddAdmin() {
               ))}
             </List>
           </Box>
+
         </VStack>
       </Container>
     </Flex>

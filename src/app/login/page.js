@@ -54,7 +54,6 @@ export default function Login() {
 
             const data = response.data;
             console.log("Login successful:", data);
-            console.log("User role:", data.role);
 
             // Case 1: User is already registered
             toast({
@@ -87,9 +86,8 @@ export default function Login() {
 
     // Case 2: User is not registered
     const handleRegistration = async () => {
-        console.log(userName);
-        console.log(idToken);
-
+        console.log(userName, idToken);
+    
         try {
             const response = await axios.post("http://localhost:8080/player", {
                 player: {
@@ -102,18 +100,19 @@ export default function Login() {
                     "Content-Type": "application/json",
                 },
             });
-
-            // Since backend returns plain text, use response.data to parse
-            const message = response.data;
-
+    
+            // Extract the message from the response data
+            const { message } = response.data;
+    
             toast({
                 title: "Registration Successful",
-                description: message,
+                description: message, // Use the extracted message here
                 status: "success",
                 duration: 9000,
                 isClosable: true,
             });
-
+    
+            document.cookie = "g_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             router.push("/find-tournament");
         } catch (error) {
             console.error("Registration failed", error);
@@ -126,6 +125,7 @@ export default function Login() {
             });
         }
     };
+    
 
     return (
         <>

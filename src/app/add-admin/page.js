@@ -31,12 +31,15 @@ export default function AddAdmin() {
   useEffect(() => {
     const loadInvitedAdmins = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/admin/me/invitee", {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        const response = await axios.get(
+          "http://localhost:8080/admin/me/invitee",
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         const admins = response.data;
 
@@ -61,10 +64,10 @@ export default function AddAdmin() {
     try {
       const response = await axios.post(
         "http://localhost:8080/admin",
-        { 
+        {
           username: username,
-           email: email 
-          },
+          email: email,
+        },
         {
           withCredentials: true,
           headers: {
@@ -93,7 +96,8 @@ export default function AddAdmin() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to send invitation",
+        description:
+          error.response?.data?.message || "Failed to send invitation",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -103,9 +107,45 @@ export default function AddAdmin() {
     }
   };
 
+  const resendInviteEmail = async (person) => {
+    try {
+      console.log(person.username, person.email);
+      const currentTimeInSeconds = Math.floor(Date.now() / 1000); 
+      
+      const response = await axios.post(
+        "http://localhost:8080/admin/link",
+        {
+          username: person.username,
+          email: person.email,
+          time: currentTimeInSeconds, // current timestamp
+          // mac: "some-generated-mac", // this should be calculated or fetched correctly
+          // credentials: "some-credentials-token", // fetch or generate the correct credentials
+        },
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log("Resend invite response:", response.data);
+      alert(`Invitation resent to ${person.username}`);
+    } catch (error) {
+      console.error(
+        "Failed to resend invite:",
+        error.response?.data || error.message
+      );
+      alert(
+        `Failed to resend invite: ${
+          error.response?.data?.message || error.message
+        }`
+      );
+    }
+  };
+
   return (
-    <Flex minH="90vh"  bg="white">
-      <Container maxW="container.2xl" my={10} mx={{lg: 8, xl: "10%"}}>
+    <Flex minH="90vh" bg="white">
+      <Container maxW="container.2xl" my={10} mx={{ lg: 8, xl: "10%" }}>
         <Button onClick={() => router.back()} colorScheme="blue" mb={10}>
           Back
         </Button>
@@ -172,9 +212,7 @@ export default function AddAdmin() {
                       size="sm"
                       colorScheme="blue"
                       variant="outline"
-                      onClick={() =>
-                        console.log(`Resend invitation to ${person.username}`)
-                      }
+                      onClick={() => resendInviteEmail(person)}
                     >
                       Resend link email
                     </Button>
@@ -183,7 +221,6 @@ export default function AddAdmin() {
               ))}
             </List>
           </Box>
-
         </VStack>
       </Container>
     </Flex>

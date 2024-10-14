@@ -74,7 +74,7 @@ export default function Activate() {
     // Show success message
     toast({
       title: "Activation Successful",
-      description: `Account successfully linked with message code: ${data.message}`,
+      description: `Account successfully linked! Welcome ${data.username}!`,
       status: "success",
       duration: 9000,
       isClosable: true,

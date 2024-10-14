@@ -42,6 +42,7 @@ export default function AddAdmin() {
         );
 
         const admins = response.data;
+        console.log(admins);
 
         // If no admins are invited yet, handle the empty response
         if (admins.length !== 0) {
@@ -87,7 +88,7 @@ export default function AddAdmin() {
       // Add the newly invited admin to the list
       setInvitedPeople([
         ...invitedPeople,
-        { id: String(Date.now()), email, username, isactive: false },
+        { id: String(Date.now()), email, username, active: false },
       ]);
 
       // Clear the form fields after inviting
@@ -110,8 +111,8 @@ export default function AddAdmin() {
   const resendInviteEmail = async (person) => {
     try {
       console.log(person.username, person.email);
-      const currentTimeInSeconds = Math.floor(Date.now() / 1000); 
-      
+      const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+
       const response = await axios.post(
         "http://localhost:8080/admin/link",
         {
@@ -153,6 +154,7 @@ export default function AddAdmin() {
             <Heading size="lg" mb={4}>
               Invite Admin
             </Heading>
+            <Text mb={5}>Strictly to Google domain emails only.</Text>
 
             {/* form to invite admin */}
             <form onSubmit={handleInvite}>
@@ -199,21 +201,22 @@ export default function AddAdmin() {
                     <Box>
                       <Text fontWeight="bold">{person.username}</Text>
                       <Text>{person.description}</Text>
-                      <Badge colorScheme={person.isactive ? "green" : "yellow"}>
-                        {person.isactive
-                          ? "Active"
-                          : "Waiting for confirmation"}
+                      <Badge colorScheme={person.active ? "green" : "yellow"}>
+                        {person.active ? "Active" : "Waiting for confirmation"}
                       </Badge>
                     </Box>
-                    <Button
-                      leftIcon={<EmailIcon />}
-                      size="sm"
-                      colorScheme="blue"
-                      variant="outline"
-                      onClick={() => resendInviteEmail(person)}
-                    >
-                      Resend link email
-                    </Button>
+
+                    {!person.active && (
+                      <Button
+                        leftIcon={<EmailIcon />}
+                        size="sm"
+                        colorScheme="blue"
+                        variant="outline"
+                        onClick={() => resendInviteEmail(person)}
+                      >
+                        Resend link email
+                      </Button>
+                    )}
                   </Flex>
                 </ListItem>
               ))}

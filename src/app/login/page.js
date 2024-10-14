@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useContext } from "react";
+import { UserContext } from "../Providers.js";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import Head from 'next/head'; 
 import { GoogleLogin } from "@react-oauth/google";
 import {
@@ -27,12 +30,35 @@ import {
 export default function Login() {
     const toast = useToast();
     const router = useRouter();
+    const { userData, setUserData } = useContext(UserContext);
 
     const [isNewUser, setIsNewUser] = useState(false); // To control the modal visibility
     const [userName, setUserName] = useState(""); // To store the username input
     const [description, setDescription] = useState(""); // To store the username input
     const [idToken, setIdToken] = useState(""); // Store the Google credentials
     const { isOpen, onOpen, onClose } = useDisclosure(); // Modal control
+
+    // Fetch User Data
+    const fetchUserData = async (username) => {
+        try {
+            const response = await fetch(`http://localhost:8080/player/${username}`, {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch user data: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            setUserData(data); // Store the fetched user data
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+        }
+    };
 
     // Google login
     const handleGoogleLogin = async (credentialResponse) => {
@@ -42,32 +68,32 @@ export default function Login() {
 
         // Send the ID token to the backend
         try {
-            const response = await fetch("http://localhost:8080/auth/login", {
-                method: "POST",
+            const response = await axios.post("http://localhost:8080/auth/login", {
+                credentials: idToken,
+            }, {
+                withCredentials: true,
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    credentials: idToken,
-                }),
             });
 
-            if (!response.ok) {
-                throw new Error(`Network response was not ok: ${response.statusText}`);
-            }
-
-            const data = await response.json();
+            const data = response.data;
             console.log("Login successful:", data);
-            console.log("User role:", data.role);
 
             // Case 1: User is already registered
             toast({
                 title: "Login Success",
                 description: `Welcome ${data.username}!`,
                 status: "success",
-                duration: 9000,
+                duration: 2000,
                 isClosable: true,
             });
+
+            // Remove the g_state cookie after successful login
+            document.cookie = "g_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+            console.log(userData);
+            await fetchUserData(data.username);
 
             // Redirect to admin dashboard
             if (data.role === "ADMIN") {
@@ -75,7 +101,15 @@ export default function Login() {
             }
             // Redirect to player dashboard
             else if (data.role === "PLAYER") {
-                router.push("/choose-clan");
+                const predefinedClans = ["Rocket", "Aqua", "Magma", "Galactic"]; // Define clans
+            
+                if (userData?.clan?.name && predefinedClans.includes(userData.clan.name)) {
+                    // If the user has a valid clan, redirect to the profile page
+                    router.push("/profile");
+                } else {
+                    // If the user does not have a valid clan (or has "No clan"), redirect to choose-clan
+                    router.push("/choose-clan");
+                }
             }
         } catch (error) {
             console.error("Login failed", error);
@@ -88,39 +122,33 @@ export default function Login() {
 
     // Case 2: User is not registered
     const handleRegistration = async () => {
-        console.log(userName);
-        console.log(idToken);
-
+        console.log(userName, idToken);
+    
         try {
-            const response = await fetch("http://localhost:8080/player", {
-                method: "POST",
+            const response = await axios.post("http://localhost:8080/player", {
+                player: {
+                    username: userName,
+                    description: description,
+                },
+                credentials: idToken,
+            }, {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    player: {
-                        username: userName,
-                        description: description,
-                    },
-                    credentials: idToken,
-                }),
             });
-
-            if (!response.ok) {
-                throw new Error(`Registration failed: ${response.statusText}`);
-            }
-
-            // Since backend returns plain text, use response.text() to parse
-            const message = await response.text();
-
+    
+            // Extract the message from the response data
+            const { message } = response.data;
+    
             toast({
                 title: "Registration Successful",
-                description: message,
+                description: message, // Use the extracted message here
                 status: "success",
-                duration: 9000,
+                duration: 2000,
                 isClosable: true,
             });
-
+    
+            document.cookie = "g_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             router.push("/find-tournament");
         } catch (error) {
             console.error("Registration failed", error);
@@ -128,11 +156,12 @@ export default function Login() {
                 title: "Registration Failed",
                 description: "Please try again.",
                 status: "error",
-                duration: 9000,
+                duration: 2000,
                 isClosable: true,
             });
         }
     };
+    
 
     return (
         <>
@@ -171,7 +200,7 @@ export default function Login() {
 
                         {/* Google login */}
                         <Flex justify="center" align="center">
-                            <GoogleLogin onSuccess={handleGoogleLogin} useOneTap />
+                            <GoogleLogin onSuccess={handleGoogleLogin} />
 
                             {/* Modal for new user registration */}
                             <Modal isOpen={isOpen} onClose={onClose}>

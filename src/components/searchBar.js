@@ -3,13 +3,13 @@ import { useState } from 'react';
 import { Box, Input, InputGroup, Button, InputRightElement } from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
 
-function SearchBar({ setSearchTerm }) {
+function SearchBar({ handleSearch }) {  // Updated to receive handleSearch
   const [inputValue, setInputValue] = useState('');
 
   const handleInputChange = (e) => {
     const value = e.target.value;
     setInputValue(value);
-    setSearchTerm(value);
+    handleSearch(value); // Call the handleSearch function directly
   };
 
   return (

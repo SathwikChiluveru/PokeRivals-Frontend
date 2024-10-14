@@ -17,7 +17,7 @@ export default function RootLayout({ children }) {
   const noNavbarRoutes = ['/','/landing']; // Homepage route
 
   // Routes where MainNavbar (NewNavbar) should be displayed
-  const mainNavbarRoutes = ['/login', '/register'];
+  const mainNavbarRoutes = ['/login', '/activate'];
 
   return (
     <html lang="en">

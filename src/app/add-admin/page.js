@@ -118,8 +118,6 @@ export default function AddAdmin() {
           username: person.username,
           email: person.email,
           time: currentTimeInSeconds, // current timestamp
-          // mac: "some-generated-mac", // this should be calculated or fetched correctly
-          // credentials: "some-credentials-token", // fetch or generate the correct credentials
         },
         {
           withCredentials: true,

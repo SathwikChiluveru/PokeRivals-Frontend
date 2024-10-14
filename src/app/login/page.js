@@ -101,15 +101,7 @@ export default function Login() {
             }
             // Redirect to player dashboard
             else if (data.role === "PLAYER") {
-                const predefinedClans = ["Rocket", "Aqua", "Magma", "Galactic"]; // Define clans
-            
-                if (userData?.clan?.name && predefinedClans.includes(userData.clan.name)) {
-                    // If the user has a valid clan, redirect to the profile page
-                    router.push("/profile");
-                } else {
-                    // If the user does not have a valid clan (or has "No clan"), redirect to choose-clan
-                    router.push("/choose-clan");
-                }
+                router.push("/choose-clan");
             }
         } catch (error) {
             console.error("Login failed", error);

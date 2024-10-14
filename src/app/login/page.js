@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useContext } from "react";
+import { UserContext } from "../Providers.js";
 import { useRouter } from "next/navigation";
 import Head from 'next/head'; 
 import { GoogleLogin } from "@react-oauth/google";
@@ -27,12 +29,35 @@ import {
 export default function Login() {
     const toast = useToast();
     const router = useRouter();
+    const { userData, setUserData } = useContext(UserContext);
 
     const [isNewUser, setIsNewUser] = useState(false); // To control the modal visibility
     const [userName, setUserName] = useState(""); // To store the username input
     const [description, setDescription] = useState(""); // To store the username input
     const [idToken, setIdToken] = useState(""); // Store the Google credentials
     const { isOpen, onOpen, onClose } = useDisclosure(); // Modal control
+
+    // Fetch User Data
+    const fetchUserData = async (username) => {
+        try {
+            const response = await fetch(`http://localhost:8080/player/${username}`, {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch user data: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            setUserData(data); // Store the fetched user data
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+        }
+    };
 
     // Google login
     const handleGoogleLogin = async (credentialResponse) => {
@@ -44,6 +69,7 @@ export default function Login() {
         try {
             const response = await fetch("http://localhost:8080/auth/login", {
                 method: "POST",
+                credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -57,6 +83,7 @@ export default function Login() {
             }
 
             const data = await response.json();
+            console.log(userData)
             console.log("Login successful:", data);
             console.log("User role:", data.role);
 
@@ -65,9 +92,12 @@ export default function Login() {
                 title: "Login Success",
                 description: `Welcome ${data.username}!`,
                 status: "success",
-                duration: 9000,
+                duration: 2000,
                 isClosable: true,
             });
+
+            console.log(userData);
+            await fetchUserData(data.username);
 
             // Redirect to admin dashboard
             if (data.role === "ADMIN") {
@@ -75,7 +105,15 @@ export default function Login() {
             }
             // Redirect to player dashboard
             else if (data.role === "PLAYER") {
-                router.push("/choose-clan");
+                const predefinedClans = ["Rocket", "Aqua", "Magma", "Galactic"]; // Define clans
+            
+                if (userData?.clan?.name && predefinedClans.includes(userData.clan.name)) {
+                    // If the user has a valid clan, redirect to the profile page
+                    router.push("/profile");
+                } else {
+                    // If the user does not have a valid clan (or has "No clan"), redirect to choose-clan
+                    router.push("/choose-clan");
+                }
             }
         } catch (error) {
             console.error("Login failed", error);
@@ -117,7 +155,7 @@ export default function Login() {
                 title: "Registration Successful",
                 description: message,
                 status: "success",
-                duration: 9000,
+                duration: 2000,
                 isClosable: true,
             });
 
@@ -128,7 +166,7 @@ export default function Login() {
                 title: "Registration Failed",
                 description: "Please try again.",
                 status: "error",
-                duration: 9000,
+                duration: 2000,
                 isClosable: true,
             });
         }

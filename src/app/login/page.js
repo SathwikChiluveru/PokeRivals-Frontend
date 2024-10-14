@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useContext } from "react";
 import { UserContext } from "../Providers.js";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import Head from 'next/head'; 
 import { GoogleLogin } from "@react-oauth/google";
 import {
@@ -67,25 +68,17 @@ export default function Login() {
 
         // Send the ID token to the backend
         try {
-            const response = await fetch("http://localhost:8080/auth/login", {
-                method: "POST",
-                credentials: "include",
+            const response = await axios.post("http://localhost:8080/auth/login", {
+                credentials: idToken,
+            }, {
+                withCredentials: true,
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    credentials: idToken,
-                }),
             });
 
-            if (!response.ok) {
-                throw new Error(`Network response was not ok: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            console.log(userData)
+            const data = response.data;
             console.log("Login successful:", data);
-            console.log("User role:", data.role);
 
             // Case 1: User is already registered
             toast({
@@ -95,6 +88,9 @@ export default function Login() {
                 duration: 2000,
                 isClosable: true,
             });
+
+            // Remove the g_state cookie after successful login
+            document.cookie = "g_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
             console.log(userData);
             await fetchUserData(data.username);
@@ -126,39 +122,33 @@ export default function Login() {
 
     // Case 2: User is not registered
     const handleRegistration = async () => {
-        console.log(userName);
-        console.log(idToken);
-
+        console.log(userName, idToken);
+    
         try {
-            const response = await fetch("http://localhost:8080/player", {
-                method: "POST",
+            const response = await axios.post("http://localhost:8080/player", {
+                player: {
+                    username: userName,
+                    description: description,
+                },
+                credentials: idToken,
+            }, {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    player: {
-                        username: userName,
-                        description: description,
-                    },
-                    credentials: idToken,
-                }),
             });
-
-            if (!response.ok) {
-                throw new Error(`Registration failed: ${response.statusText}`);
-            }
-
-            // Since backend returns plain text, use response.text() to parse
-            const message = await response.text();
-
+    
+            // Extract the message from the response data
+            const { message } = response.data;
+    
             toast({
                 title: "Registration Successful",
-                description: message,
+                description: message, // Use the extracted message here
                 status: "success",
                 duration: 2000,
                 isClosable: true,
             });
-
+    
+            document.cookie = "g_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             router.push("/find-tournament");
         } catch (error) {
             console.error("Registration failed", error);
@@ -171,6 +161,7 @@ export default function Login() {
             });
         }
     };
+    
 
     return (
         <>
@@ -209,7 +200,7 @@ export default function Login() {
 
                         {/* Google login */}
                         <Flex justify="center" align="center">
-                            <GoogleLogin onSuccess={handleGoogleLogin} useOneTap />
+                            <GoogleLogin onSuccess={handleGoogleLogin} />
 
                             {/* Modal for new user registration */}
                             <Modal isOpen={isOpen} onClose={onClose}>

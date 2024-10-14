@@ -85,7 +85,7 @@ export default function MainNavbar() {
 
         toast({
           title: "Logout Successful",
-          description: message,
+          description: "See you soon!",
           status: "success",
           duration: 9000,
           isClosable: true,

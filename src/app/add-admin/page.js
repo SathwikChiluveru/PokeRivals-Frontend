@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@chakra-ui/react';
 import { useRouter } from "next/navigation";
 import axios from 'axios';
-import LoadingOverlay from '../../components/LoadingOverlay'; // Adjust path if necessary
+import LoadingOverlay from '../../components/LoadingOverlay';
 import { Flex, Container, VStack, Box, Heading, Text, Input, Button, List, ListItem, Badge } from '@chakra-ui/react';
 import { AddIcon, EmailIcon } from '@chakra-ui/icons';
 
@@ -23,17 +23,7 @@ export default function AddAdmin() {
             try {
                 setLoading(true); // Show loading overlay
 
-                // // Check for session ID in cookies
-                // const sessionId = document.cookie.split('; ').find(row => row.startsWith('fisting='));
-                // console.log("Session ID:", sessionId);
-
-                // if (!sessionId || sessionId.split('=')[1] === "undefined") {
-                //     console.log("No session ID found or session ID is undefined");
-                //     router.push('/login'); // Redirect to login if no session ID found
-                //     return;
-                // }
-
-                // Optionally verify session with an API call
+                //  verify session with an API call
                 const response = await axios.get('http://localhost:8080/test', {
                     withCredentials: true,
                     headers: {
